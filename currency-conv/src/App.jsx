@@ -32,42 +32,38 @@ function App() {
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [toCurrency, setToCurrency] = useState("EUR");
   const [isEditingFrom, setIsEditingFrom] = useState(true);
+  const [debounceTimeout, setDebounceTimeout] = useState(null);
 
-  const { refetch } = useQuery({
-    queryKey: ['currency', fromCurrency, toCurrency, amount],
-    queryFn: async () => {
-      const result = await CurrencyConverter(fromCurrency, toCurrency, Number(amount));
-      setConvertedAmount(result);
-      return result;
-    },
-    enabled: false,
-  });
+  const fetchConversion = async (value, isFrom) => {
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    const timeout = setTimeout(async () => {
+      if (isFrom) {
+        const result = await CurrencyConverter(fromCurrency, toCurrency, Number(value));
+        setConvertedAmount(result);
+      } else {
+        const result = await CurrencyConverter(toCurrency, fromCurrency, Number(value));
+        setAmount(result);
+      }
+    }, 500); // Debounce for 500ms
+    setDebounceTimeout(timeout);
+  };
 
-  useEffect(() => {
-    if (amount && !isNaN(amount) && amount > 0) {
-      refetch();
+  const handleAmountChange = (value, isFrom) => {
+    if (isFrom) {
+      setAmount(value);
+      setIsEditingFrom(true);
+    } else {
+      setConvertedAmount(value);
+      setIsEditingFrom(false);
     }
-  }, [amount, fromCurrency, toCurrency, refetch]);
+    fetchConversion(value, isFrom);
+  };
 
   const handleSwapCurrencies = () => {
     setFromCurrency(toCurrency);
     setToCurrency(fromCurrency);
     setAmount(convertedAmount);
     setConvertedAmount(amount);
-  };
-
-  const handleAmountChange = async (value, isFrom) => {
-    if (isFrom) {
-      setAmount(value);
-      setIsEditingFrom(true);
-      const result = await CurrencyConverter(fromCurrency, toCurrency, Number(value));
-      setConvertedAmount(result);
-    } else {
-      setConvertedAmount(value);
-      setIsEditingFrom(false);
-      const result = await CurrencyConverter(toCurrency, fromCurrency, Number(value));
-      setAmount(result);
-    }
   };
 
   return (
