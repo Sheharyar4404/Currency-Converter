@@ -52,6 +52,22 @@ function App() {
   const handleSwapCurrencies = () => {
     setFromCurrency(toCurrency);
     setToCurrency(fromCurrency);
+    setAmount(convertedAmount);
+    setConvertedAmount(amount);
+  };
+
+  const handleAmountChange = async (value, isFrom) => {
+    if (isFrom) {
+      setAmount(value);
+      setIsEditingFrom(true);
+      const result = await CurrencyConverter(fromCurrency, toCurrency, Number(value));
+      setConvertedAmount(result);
+    } else {
+      setConvertedAmount(value);
+      setIsEditingFrom(false);
+      const result = await CurrencyConverter(toCurrency, fromCurrency, Number(value));
+      setAmount(result);
+    }
   };
 
   return (
@@ -71,7 +87,7 @@ function App() {
               <input 
                 type="number" 
                 value={amount} 
-                onChange={(e) => { setAmount(e.target.value); setIsEditingFrom(true); }} 
+                onChange={(e) => handleAmountChange(e.target.value, true)} 
                 className="w-full outline-none text-lg font-medium bg-transparent"
               />
             </div>
@@ -91,7 +107,7 @@ function App() {
               <input 
                 type="number" 
                 value={convertedAmount} 
-                readOnly 
+                onChange={(e) => handleAmountChange(e.target.value, false)}
                 className="w-full outline-none text-lg font-medium bg-transparent"
               />
             </div>
